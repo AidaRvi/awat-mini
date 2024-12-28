@@ -1,7 +1,7 @@
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { CreateContactCommand } from 'src/domain/commands/create-contact.command';
 import { ContactRoot } from 'src/domain/models/contact.model';
-import { EventstoreRepository } from 'src/infrustructure/storage/eventstoredb/eventstoredb.repository';
+import { EventStoreService } from 'src/infrustructure/storage/eventstoredb/esdb.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @CommandHandler(CreateContactCommand)
@@ -10,7 +10,7 @@ export class CreateContactHandler
 {
   constructor(
     private readonly publisher: EventPublisher,
-    private readonly ESrepository: EventstoreRepository,
+    private readonly ESrepository: EventStoreService,
   ) {}
 
   async execute(command: CreateContactCommand) {
