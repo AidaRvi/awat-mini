@@ -1,10 +1,15 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   EventStoreDBClient,
   jsonEvent,
   START,
   PersistentSubscriptionToStream,
   PersistentSubscriptionToStreamSettings,
+  AllStreamRecordedEvent,
 } from '@eventstore/db-client';
 
 @Injectable()
@@ -109,5 +114,23 @@ export class EventstoreRepository implements OnModuleInit {
 
   private async processEvent(resolvedEvent: any) {
     console.log('Processing event:', resolvedEvent.event.data);
+  }
+
+  async getAllEvents(): Promise<AllStreamRecordedEvent[]> {
+    const events: any[] = [];
+
+    try {
+      const readResult = this.client.readAll();
+
+      for await (const resolvedEvent of readResult)
+        events.push(resolvedEvent.event);
+
+      return events;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error retrieving projection events',
+        error.message,
+      );
+    }
   }
 }

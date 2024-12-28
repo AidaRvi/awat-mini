@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { EventstoreRepository } from './eventstoredb.repository';
 import { SubscriptionController } from './subscription.controller';
+import { EventStoreService } from './esdb.service';
+import { EventstoreRepository } from './eventstoredb.repository';
 
 @Module({
-  providers: [EventstoreRepository],
+  providers: [EventStoreService, EventstoreRepository],
   controllers: [SubscriptionController],
   exports: [EventstoreRepository],
 })

@@ -1,20 +1,29 @@
 import { Module } from '@nestjs/common';
-// import { ContactCreatedEventHandler } from './handler/contact.event.handler';
 import { ContactService } from './contact.service';
-import { ContactRepository } from 'src/infrustructure/storage/eventstoredb/contact.repository';
-import { CqrsModule } from '@nestjs/cqrs';
+import { CqrsModule, EventBus } from '@nestjs/cqrs';
 import { CreateContactHandler } from './handler/contact.command.handler';
 import { EventstoreRepository } from 'src/infrustructure/storage/eventstoredb/eventstoredb.repository';
+import { ContactRoot } from 'src/domain/models/contact.model';
+import { EventStoreService } from 'src/infrustructure/storage/eventstoredb/esdb.service';
 
 @Module({
   imports: [CqrsModule],
   providers: [
     EventstoreRepository,
-    ContactRepository,
     CreateContactHandler,
     ContactService,
-    // ContactCreatedEventHandler,
+    ContactRoot,
+    EventStoreService,
   ],
   exports: [ContactService],
 })
-export class ContactModule {}
+export class ContactModule {
+  constructor(
+    private readonly eventStore: EventStoreService,
+    private readonly eventBus: EventBus,
+  ) {}
+
+  onModuleInit() {
+    this.eventBus.publisher = this.eventStore;
+  }
+}
