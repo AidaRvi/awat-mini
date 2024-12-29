@@ -7,12 +7,13 @@ export class SubscriptionController implements OnModuleInit {
 
   @Get('create-persistent-subscription')
   async createSubscription() {
+    // await this.eventStoreService.createProjection();
+    await this.eventStoreService.createPersistentSubscription();
+    this.eventStoreService.readFromPersistentSubscription();
     return 'Persistent Subscription Started';
   }
 
   async onModuleInit() {
-    // await this.eventStoreService.createPersistentSubscription();
-    await this.eventStoreService.readFromPersistentSubscription();
     this.createSubscription();
   }
 }

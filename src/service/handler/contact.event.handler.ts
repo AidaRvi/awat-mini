@@ -1,17 +1,15 @@
-import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
-// import { OrderCreatedEvent } from '../impl/order-created.event';
-// import { OrdersRepository } from '../../orders.repository';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { ContactCreated } from 'src/domain/events/create-contact.event';
+import { ContactRepository } from 'src/infrustructure/storage/mongodb/contact.repository';
 
 @EventsHandler(ContactCreated)
-export class ContactCreatedEventHandler
+export class CreateContactEventHandler
   implements IEventHandler<ContactCreated>
 {
-  // constructor(private readonly orderRepository: OrdersRepository) {}
-  constructor() {}
+  constructor(private readonly contactRepository: ContactRepository) {}
 
-  async handle(event: ContactCreated) {
-    console.log(event);
-    // await this.orderRepository.updateOne(id, { status: 'DELIVERED' });
+  async handle(query: ContactCreated): Promise<void> {
+    await this.contactRepository.createOne(query);
+    console.log('** Contact created');
   }
 }

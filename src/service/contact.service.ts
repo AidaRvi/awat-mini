@@ -11,6 +11,7 @@ export class ContactService {
   createContact(contactDto: CreateContactDto): Promise<any> {
     this.commandBus.register([CreateContactHandler]);
     const command = new CreateContactCommand(
+      contactDto.id,
       contactDto.name,
       contactDto.phoneNumber,
     );

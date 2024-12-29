@@ -12,13 +12,27 @@ services:
     ports:
       - '1113:1113'
       - '2113:2113'
+    # volumes:
+    #   - type: volume
+    #     source: eventstore-volume-data
+    #     target: /c/data/eventstore/data
+    #   - type: volume
+    #     source: eventstore-volume-logs
+    #     target: /c/data/eventstore/logs
+
+  mongodb:
+    image: bitnami/mongodb
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: awat
     volumes:
-      - type: volume
-        source: eventstore-volume-data
-        target: /c/data/eventstore/data
-      - type: volume
-        source: eventstore-volume-logs
-        target: /c/data/eventstore/logs
+      - mongodb_data:/data/db
+
 volumes:
   eventstore-volume-data:
   eventstore-volume-logs:
+  mongodb_data:
+    driver: local

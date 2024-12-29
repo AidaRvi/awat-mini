@@ -37,20 +37,15 @@ export class CreateContactHandler
 
   async checkIfPhoneNumberExists(phoneNumber: number) {
     const allEvents = await this.ESrepository.getAllEvents();
-    const contactCreatedEvents = allEvents.filter((event) => {
+    const duplicatedEvent = allEvents.find((event) => {
       if (
-        event.streamId.startsWith('contact_') &&
-        event.type == 'ContactCreated'
+        event.type == 'ContactCreated' &&
+        (event.data as any).phoneNumber === phoneNumber
       )
         return event.data;
     });
 
-    for (const event of contactCreatedEvents) {
-      //@ts-ignore
-      if (event.data.phoneNumber === phoneNumber) {
-        return true;
-      }
-    }
+    if (duplicatedEvent) return true;
     return false;
   }
 }
