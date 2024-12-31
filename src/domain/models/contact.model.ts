@@ -1,12 +1,13 @@
 import { AggregateRoot } from '@nestjs/cqrs';
 import { ContactCreated } from '../events/create-contact.event';
+import { ContactUpdated } from '../events/update-contact.event';
 
-export class ContactRoot extends AggregateRoot {
+export class Contact extends AggregateRoot {
   private id: string;
   private name: string;
   private phoneNumber: number;
 
-  constructor(id: string, name: string, phoneNumber: number) {
+  constructor(id: string, name: string, phoneNumber?: number) {
     super();
     this.id = id;
     this.name = name;
@@ -20,6 +21,11 @@ export class ContactRoot extends AggregateRoot {
       this.name,
       this.phoneNumber,
     );
+    return this.apply(contactEvent);
+  }
+
+  updateContact() {
+    const contactEvent = new ContactUpdated(this.id, this.name);
     return this.apply(contactEvent);
   }
 }

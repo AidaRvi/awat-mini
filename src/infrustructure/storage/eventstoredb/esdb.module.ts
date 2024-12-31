@@ -4,7 +4,8 @@ import { CommandBus, EventBus, UnhandledExceptionBus } from '@nestjs/cqrs';
 import { ContactRepository } from '../mongodb/contact.repository';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Contact, ContactSchema } from '../mongodb/contact.schema';
-import { CreateContactEventHandler } from 'src/service/handler/contact.event.handler';
+import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
+import { UpdateContactEventHandler } from 'src/service/handler/update-contact.event.handler';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CreateContactEventHandler } from 'src/service/handler/contact.event.han
   providers: [
     EventStoreService,
     CreateContactEventHandler,
+    UpdateContactEventHandler,
     EventBus,
     ContactRepository,
     CommandBus,

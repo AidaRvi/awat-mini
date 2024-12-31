@@ -1,5 +1,5 @@
 import { Controller, Get, OnModuleInit } from '@nestjs/common';
-import { EventStoreService } from './infrustructure/storage/eventstoredb/esdb.service';
+import { EventStoreService } from 'src/infrustructure/storage/eventstoredb/esdb.service';
 
 @Controller()
 export class SubscriptionController implements OnModuleInit {
@@ -8,7 +8,7 @@ export class SubscriptionController implements OnModuleInit {
   @Get('create-persistent-subscription')
   async createSubscription() {
     // await this.eventStoreService.createProjection();
-    await this.eventStoreService.createPersistentSubscription();
+    // await this.eventStoreService.createPersistentSubscription();
     this.eventStoreService.readFromPersistentSubscription();
     return 'Persistent Subscription Started';
   }

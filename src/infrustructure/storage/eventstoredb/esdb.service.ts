@@ -1,14 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { IEvent, IEventPublisher, EventBus } from '@nestjs/cqrs';
 import {
   AllStreamRecordedEvent,
   EventStoreDBClient,
+  EventType,
   jsonEvent,
   PersistentSubscriptionToAllSettings,
+  ResolvedEvent,
   ROUND_ROBIN,
+  START,
+  StreamingRead,
 } from '@eventstore/db-client';
 import { ContactCreated } from 'src/domain/events/create-contact.event';
-import { CreateContactEventHandler } from 'src/service/handler/contact.event.handler';
+import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
+import { UpdateContactEventHandler } from 'src/service/handler/update-contact.event.handler';
+import { ContactUpdated } from 'src/domain/events/update-contact.event';
 
 @Injectable()
 export class EventStoreService implements IEventPublisher, OnModuleInit {
@@ -21,6 +28,10 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
     this.client = EventStoreDBClient.connectionString(
       'esdb://localhost:2113?tls=false',
     );
+    this.eventBus.register([
+      CreateContactEventHandler,
+      UpdateContactEventHandler,
+    ]);
   }
 
   async publish<T extends IEvent>(event: T) {
@@ -50,6 +61,24 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
       result.push(resolvedEvent.event);
 
     return result;
+  }
+
+  async getStream(
+    streamName: string,
+  ): Promise<StreamingRead<ResolvedEvent<EventType>>> {
+    try {
+      const events = this.client.readStream(streamName, {
+        fromRevision: START,
+        maxCount: 1,
+      });
+
+      for await (const _resolvedEvent of events) {
+      }
+
+      return events;
+    } catch (error) {
+      return;
+    }
   }
 
   async createProjection() {
@@ -132,11 +161,25 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
     });
   }
 
-  private async handleEvent(event: any) {
-    const { id, name, phoneNumber } = event.data;
+  private async handleEvent(recievedEvent: any) {
+    let event;
 
-    const contactEvent = new ContactCreated(id, name, phoneNumber);
-    this.eventBus.register([CreateContactEventHandler]);
-    await this.eventBus.publish(contactEvent);
+    switch (recievedEvent.type) {
+      case 'ContactCreated':
+        event = new ContactCreated(
+          recievedEvent.data.id,
+          recievedEvent.data.name,
+          recievedEvent.data.phoneNumber,
+        );
+        break;
+      case 'ContactUpdated':
+        event = new ContactUpdated(
+          recievedEvent.data.id,
+          recievedEvent.data.name,
+        );
+        break;
+    }
+
+    await this.eventBus.publish(event);
   }
 }

@@ -1,6 +1,6 @@
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { CreateContactCommand } from 'src/domain/commands/create-contact.command';
-import { ContactRoot } from 'src/domain/models/contact.model';
+import { Contact } from 'src/domain/models/contact.model';
 import { EventStoreService } from 'src/infrustructure/storage/eventstoredb/esdb.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,7 +15,7 @@ export class CreateContactHandler
 
   async execute(command: CreateContactCommand) {
     // TODO: factory
-    const contactRoot = new ContactRoot(
+    const contactRoot = new Contact(
       uuidv4(),
       command.name,
       command.phoneNumber,
