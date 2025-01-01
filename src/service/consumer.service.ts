@@ -10,7 +10,7 @@ export class ConsumerService {
 
   @MessagePattern('create-contact')
   createContact(@Payload() contactDto: CreateContactDto) {
-    console.log('Received message from "create-contact":', contactDto);
+    console.log('** Received a request for "creation":', contactDto);
 
     this.contactService.createContact(contactDto);
 
@@ -19,7 +19,7 @@ export class ConsumerService {
 
   @MessagePattern('update-contact')
   updateContact(@Payload() contactDto: UpdateContactDto) {
-    console.log('Received message from "update-contact":', contactDto);
+    console.log('** Received a request for "updating":', contactDto);
 
     this.contactService.updateContact(contactDto);
 

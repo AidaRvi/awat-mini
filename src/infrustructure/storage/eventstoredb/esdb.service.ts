@@ -7,10 +7,9 @@ import {
   EventType,
   jsonEvent,
   PersistentSubscriptionToAllSettings,
-  ResolvedEvent,
   ROUND_ROBIN,
   START,
-  StreamingRead,
+  ResolvedEvent,
 } from '@eventstore/db-client';
 import { ContactCreated } from 'src/domain/events/create-contact.event';
 import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
@@ -20,7 +19,7 @@ import { ContactUpdated } from 'src/domain/events/update-contact.event';
 @Injectable()
 export class EventStoreService implements IEventPublisher, OnModuleInit {
   private client: EventStoreDBClient;
-  private subscriptionName = 'subscriptionName246';
+  private subscriptionName = 'CONTACTS2';
 
   constructor(private readonly eventBus: EventBus) {}
 
@@ -63,21 +62,19 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
     return result;
   }
 
-  async getStream(
-    streamName: string,
-  ): Promise<StreamingRead<ResolvedEvent<EventType>>> {
+  async getStream(streamName: string): Promise<ResolvedEvent<EventType>[]> {
     try {
-      const events = this.client.readStream(streamName, {
+      const unResolvedEvent = this.client.readStream(streamName, {
         fromRevision: START,
-        maxCount: 1,
       });
 
-      for await (const _resolvedEvent of events) {
-      }
+      const events = [];
+      for await (const resolvedEvent of unResolvedEvent)
+        events.push(resolvedEvent.event);
 
       return events;
     } catch (error) {
-      return;
+      return [];
     }
   }
 
@@ -121,7 +118,7 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
         checkPointAfter: 0,
         checkPointLowerBound: 0,
         checkPointUpperBound: 0,
-        maxSubscriberCount: 1,
+        maxSubscriberCount: 2,
         liveBufferSize: 900,
         readBatchSize: 900,
         historyBufferSize: 1000,
@@ -147,7 +144,7 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
       if (resolvedEvent.event.type.startsWith('$')) {
         return;
       }
-      console.log('Received event');
+      console.log('** Received event');
       this.handleEvent(resolvedEvent.event);
     });
     subscription.on('error', (err) => {

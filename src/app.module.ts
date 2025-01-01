@@ -6,9 +6,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './controllers/app.controller';
 import { SubscriptionController } from './controllers/subscription.controller';
 import { ConsumerService } from './service/consumer.service';
+import { RedisModule } from './infrustructure/storage/redis/redis.module';
 
 @Module({
   imports: [
+    RedisModule,
     CqrsModule,
     EventStoreModule,
     ContactModule,

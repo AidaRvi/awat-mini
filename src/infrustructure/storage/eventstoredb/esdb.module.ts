@@ -6,10 +6,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Contact, ContactSchema } from '../mongodb/contact.schema';
 import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
 import { UpdateContactEventHandler } from 'src/service/handler/update-contact.event.handler';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Contact.name, schema: ContactSchema }]),
+    RedisModule,
   ],
   providers: [
     EventStoreService,

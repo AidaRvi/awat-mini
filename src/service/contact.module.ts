@@ -11,9 +11,11 @@ import {
 } from 'src/infrustructure/storage/mongodb/contact.schema';
 import { ContactRepository } from 'src/infrustructure/storage/mongodb/contact.repository';
 import { UpdateContactHandler } from './handler/update-contact.command.handler';
+import { RedisModule } from 'src/infrustructure/storage/redis/redis.module';
 
 @Module({
   imports: [
+    RedisModule,
     CqrsModule,
     MongooseModule.forFeature([
       { name: ContactModel.name, schema: ContactSchema },

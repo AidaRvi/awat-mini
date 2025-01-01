@@ -1,6 +1,6 @@
 version: '3.7'
 services:
-  eventstore.db2:
+  eventstore.db:
     image: eventstore/eventstore
     environment:
       - EVENTSTORE_CLUSTER_SIZE=1
@@ -45,7 +45,20 @@ services:
     networks:
       - rabbitmq_network
 
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - redis_network
+
 volumes:
+  redis_data:
   # eventstore-volume-data:
   # eventstore-volume-logs:
   mongodb_data:
@@ -54,4 +67,6 @@ volumes:
 
 networks:
   rabbitmq_network:
+    driver: bridge
+  redis_network:
     driver: bridge
