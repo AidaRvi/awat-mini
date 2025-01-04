@@ -5,7 +5,7 @@ import { CreateContactDto } from '../domain/Dto/create-contact.dto';
 import { UpdateContactDto } from '../domain/Dto/update-contact.dto';
 
 @Controller()
-export class ConsumerService {
+export class RabbitmqController {
   constructor(private readonly contactService: ContactService) {}
 
   @MessagePattern('create-contact')

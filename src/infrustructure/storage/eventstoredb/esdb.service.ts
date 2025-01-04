@@ -25,7 +25,7 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
 
   onModuleInit() {
     this.client = EventStoreDBClient.connectionString(
-      'esdb://localhost:2113?tls=false',
+      'esdb://localhost:2114?tls=false',
     );
     this.eventBus.register([
       CreateContactEventHandler,

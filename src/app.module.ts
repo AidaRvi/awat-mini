@@ -5,8 +5,8 @@ import { ContactModule } from './service/contact.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './controllers/app.controller';
 import { SubscriptionController } from './controllers/subscription.controller';
-import { ConsumerService } from './service/consumer.service';
 import { RedisModule } from './infrustructure/storage/redis/redis.module';
+import { RabbitmqController } from './controllers/rmq.controller';
 
 @Module({
   imports: [
@@ -14,9 +14,9 @@ import { RedisModule } from './infrustructure/storage/redis/redis.module';
     CqrsModule,
     EventStoreModule,
     ContactModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/awat'),
+    MongooseModule.forRoot('mongodb://localhost:27017/awat-test'),
   ],
-  // controllers: [AppController, ConsumerService],
-  controllers: [AppController, SubscriptionController, ConsumerService],
+  exports: [EventStoreModule],
+  controllers: [AppController, SubscriptionController, RabbitmqController],
 })
 export class AppModule {}
