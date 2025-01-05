@@ -35,15 +35,12 @@ export class mockEventStoreRepository {
         );
 
         for (const event of toBeSubscribed) {
-          // const event = jsonEvent({
-          //   type: 'ContactCreated',
-          //   data: { id: v4(), name: 'Aida', phoneNumber: 1234 },
-          // });
           eventStream = this.objectToReadableStream({ event });
         }
+        //TODO: remove pending
 
         resolve(eventStream);
-      }, 2000);
+      }, 1000);
     });
   }
 
