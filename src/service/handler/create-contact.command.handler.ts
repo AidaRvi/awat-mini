@@ -40,10 +40,9 @@ export class CreateContactHandler
     }
 
     const contact = this.publisher.mergeObjectContext(contactRoot);
-
     contact.commit();
 
-    this.redisService.setData(`create:${command.id}`, 'published');
+    await this.redisService.setData(`create:${command.id}`, 'published');
     console.log('** Published');
   }
 

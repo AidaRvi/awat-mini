@@ -41,12 +41,12 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
   }
 
   async getAllEvents(): Promise<AllStreamRecordedEvent[]> {
-    const result = await this.esRepository.getAllEvents();
+    const result = await this.esRepository.readAll();
     return result;
   }
 
   async getStream(streamName: string): Promise<ResolvedEvent<EventType>[]> {
-    const result = await this.esRepository.getStream(streamName);
+    const result = await this.esRepository.readStream(streamName);
     return result;
   }
 

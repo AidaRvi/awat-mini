@@ -9,7 +9,7 @@ export class RabbitmqController {
   constructor(private readonly contactService: ContactService) {}
 
   @MessagePattern('create-contact')
-  createContact(@Payload() contactDto: CreateContactDto) {
+  async createContact(@Payload() contactDto: CreateContactDto) {
     console.log('** Received a request for "creation":', contactDto);
 
     this.contactService.createContact(contactDto);

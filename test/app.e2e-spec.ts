@@ -1,89 +1,86 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateContactDto } from '../src/domain/Dto/create-contact.dto';
+import { INestApplication } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
+import { ContactModule } from 'src/service/contact.module';
+import { RabbitmqController } from 'src/controllers/rmq.controller';
+import { CreateContactDto } from 'src/domain/Dto/create-contact.dto';
+import { faker } from '@faker-js/faker/.';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  ClientProxy,
-  ClientsModule,
-  MicroserviceOptions,
-  Transport,
-} from '@nestjs/microservices';
+import { mockRedisService } from './mockes/redis.mock';
+import { mockEventStoreRepository } from './mockes/esdb.mock';
+import { mockContactModel } from './mockes/mongo.mock';
+import { RedisService } from 'src/infrustructure/storage/redis/redis.service';
+import { SubscriptionController } from 'src/controllers/subscription.controller';
+import { EventStoreRepository } from 'src/infrustructure/storage/eventstoredb/esdb.repository';
+import { EventStoreModule } from 'src/infrustructure/storage/eventstoredb/esdb.module';
+import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
+import { UpdateContactEventHandler } from 'src/service/handler/update-contact.event.handler';
+import { ContactRepository } from 'src/infrustructure/storage/mongodb/contact.repository';
 import { AppModule } from 'src/app.module';
-import mongoose from 'mongoose';
-import { contactModel } from './contact.schema';
+import { ContactService } from 'src/service/contact.service';
+import { CommandBus } from '@nestjs/cqrs';
 
-describe('RabbitmqController', () => {
-  let client: ClientProxy;
-  let connection: mongoose.Connection;
+describe('ContactModule (e2e)', () => {
+  let app: INestApplication;
+  let rmqController: RabbitmqController;
+  let redisService: mockRedisService;
+  let eventStoreRepository: mockEventStoreRepository;
+  let contactModel: mockContactModel;
 
   beforeAll(async () => {
-    await mongoose.connect('mongodb://localhost:27017/awat-test');
-
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        ClientsModule.register([
-          {
-            name: 'RABBITMQ_SERVICE',
-            transport: Transport.RMQ,
-            options: {
-              urls: ['amqp://localhost:5672'],
-              queue: 'contacts',
-              queueOptions: {
-                durable: false,
-              },
-              noAck: true,
-            },
-          },
-        ]),
-        AppModule,
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+      providers: [
+        // CreateContactEventHandler,
+        // UpdateContactEventHandler,
+        // ContactRepository,
+        // RedisService,
+        ContactService,
+        CommandBus,
       ],
-    }).compile();
+      controllers: [RabbitmqController],
+    })
+      .overrideProvider(RedisService)
+      .useClass(mockRedisService)
+      .overrideProvider(EventStoreRepository)
+      .useClass(mockEventStoreRepository)
+      .overrideProvider(getModelToken('Contact'))
+      .useClass(mockContactModel)
+      .compile();
 
-    const app = module.createNestApplication();
-    app.connectMicroservice<MicroserviceOptions>({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost:5672'],
-        queue: 'contacts',
-        queueOptions: {
-          durable: false,
-        },
-        noAck: true,
-      },
-    });
-    await app.startAllMicroservices();
+    app = moduleFixture.createNestApplication();
     await app.init();
 
-    client = module.get<ClientProxy>('RABBITMQ_SERVICE');
-    connection = mongoose.connection;
+    rmqController = app.get(RabbitmqController);
+    redisService = app.get(RedisService);
+    eventStoreRepository = app.get(EventStoreRepository);
+    contactModel = app.get(getModelToken('Contact'));
   });
 
   afterAll(async () => {
-    await connection.dropCollection('contacts');
-    await connection.close();
+    await app.close();
   });
 
-  it('should handle creating a contact successfully', async () => {
-    const contactId = uuidv4();
-
-    const testMessage: CreateContactDto = {
-      id: contactId,
-      name: 'Aida',
-      phoneNumber: 950452526,
+  it('should consume a RabbitMQ message and process it correctly', async () => {
+    const message: CreateContactDto = {
+      id: uuidv4(),
+      name: faker.person.firstName(),
+      phoneNumber: Number(
+        faker.phone.number({ style: 'international' }).slice(1),
+      ),
     };
 
-    const response = await client
-      .send('create-contact', testMessage)
-      .toPromise();
+    await rmqController.createContact(message);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    expect(response.receivedData).toBeDefined();
+    const redisData = redisService.getData(`create:${message.id}`);
+    expect(redisData).toBeDefined();
+    expect(redisData).toBe('published');
 
-    const savedContact = await contactModel.find();
-    expect(savedContact.length).toBe(1);
-
-    expect(savedContact[0]._id).toBe(contactId);
-    expect(savedContact[0].name).toBe(testMessage.name);
-    expect(savedContact[0].phoneNumber).toBe(testMessage.phoneNumber);
-  });
+    const esdbData = eventStoreRepository.readStream(`contacts-${message.id}`);
+    expect(esdbData).toBeDefined();
+    expect(esdbData.length).toBe(1);
+    expect(esdbData[0].type).toBe('ContactCreated');
+  }, 20000);
 });

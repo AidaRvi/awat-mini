@@ -45,7 +45,7 @@ export class EventStoreRepository {
     }
   }
 
-  async getAllEvents(): Promise<AllStreamRecordedEvent[]> {
+  async readAll(): Promise<AllStreamRecordedEvent[]> {
     const result: any[] = [];
     const readResult = this.client.readAll();
 
@@ -55,7 +55,7 @@ export class EventStoreRepository {
     return result;
   }
 
-  async getStream(streamName: string): Promise<ResolvedEvent<EventType>[]> {
+  async readStream(streamName: string): Promise<ResolvedEvent<EventType>[]> {
     try {
       const unResolvedEvent = this.client.readStream(streamName, {
         fromRevision: START,
