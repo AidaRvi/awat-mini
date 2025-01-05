@@ -7,6 +7,7 @@ import { Contact, ContactSchema } from '../mongodb/contact.schema';
 import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
 import { UpdateContactEventHandler } from 'src/service/handler/update-contact.event.handler';
 import { RedisModule } from '../redis/redis.module';
+import { EventStoreRepository } from './esdb.repository';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RedisModule } from '../redis/redis.module';
   ],
   providers: [
     EventStoreService,
+    EventStoreRepository,
     CreateContactEventHandler,
     UpdateContactEventHandler,
     EventBus,
@@ -22,6 +24,6 @@ import { RedisModule } from '../redis/redis.module';
     CommandBus,
     UnhandledExceptionBus,
   ],
-  exports: [EventStoreService],
+  exports: [EventStoreService, EventStoreRepository],
 })
 export class EventStoreModule {}

@@ -1,32 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { IEvent, IEventPublisher, EventBus } from '@nestjs/cqrs';
 import {
   AllStreamRecordedEvent,
-  EventStoreDBClient,
   EventType,
   jsonEvent,
-  PersistentSubscriptionToAllSettings,
-  ROUND_ROBIN,
-  START,
   ResolvedEvent,
 } from '@eventstore/db-client';
 import { ContactCreated } from 'src/domain/events/create-contact.event';
 import { CreateContactEventHandler } from 'src/service/handler/create-contact.event.handler';
 import { UpdateContactEventHandler } from 'src/service/handler/update-contact.event.handler';
 import { ContactUpdated } from 'src/domain/events/update-contact.event';
+import { EventStoreRepository } from './esdb.repository';
 
 @Injectable()
 export class EventStoreService implements IEventPublisher, OnModuleInit {
-  private client: EventStoreDBClient;
-  private subscriptionName = 'CONTACTS2';
-
-  constructor(private readonly eventBus: EventBus) {}
+  constructor(
+    private readonly eventBus: EventBus,
+    private readonly esRepository: EventStoreRepository,
+  ) {}
 
   onModuleInit() {
-    this.client = EventStoreDBClient.connectionString(
-      'esdb://localhost:2114?tls=false',
-    );
     this.eventBus.register([
       CreateContactEventHandler,
       UpdateContactEventHandler,
@@ -44,91 +37,22 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
       data: message,
     });
 
-    try {
-      await this.client.appendToStream(streamName, data);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      console.log('error in appending to stream');
-    }
+    await this.esRepository.appendToStream(streamName, data);
   }
 
   async getAllEvents(): Promise<AllStreamRecordedEvent[]> {
-    const result: any[] = [];
-    const readResult = this.client.readAll();
-
-    for await (const resolvedEvent of readResult)
-      result.push(resolvedEvent.event);
-
+    const result = await this.esRepository.getAllEvents();
     return result;
   }
 
   async getStream(streamName: string): Promise<ResolvedEvent<EventType>[]> {
-    try {
-      const unResolvedEvent = this.client.readStream(streamName, {
-        fromRevision: START,
-      });
-
-      const events = [];
-      for await (const resolvedEvent of unResolvedEvent)
-        events.push(resolvedEvent.event);
-
-      return events;
-    } catch (error) {
-      return [];
-    }
-  }
-
-  async createProjection() {
-    try {
-      const projectionName = 'projectionName10';
-
-      const query = `
-        fromCategory('contacts')
-        .when({
-          $init: () => ({ events: [] }),
-            ContactCreated: (state, event) => {
-            state.events.push({
-              id: event.data.id,
-              name: event.data.name,
-              phoneNumber: event.data.phoneNumber,
-            });
-            return state;
-          }
-        })
-      `;
-
-      await this.client.createProjection(projectionName, query, {
-        emitEnabled: true,
-      });
-
-      console.log('Projection created successfully');
-    } catch (err) {
-      console.error('Error creating projection:', err);
-    }
+    const result = await this.esRepository.getStream(streamName);
+    return result;
   }
 
   async createPersistentSubscription() {
     try {
-      const settings: PersistentSubscriptionToAllSettings = {
-        startFrom: 'start',
-        resolveLinkTos: false,
-        extraStatistics: false,
-        messageTimeout: 0,
-        maxRetryCount: 0,
-        checkPointAfter: 0,
-        checkPointLowerBound: 0,
-        checkPointUpperBound: 0,
-        maxSubscriberCount: 2,
-        liveBufferSize: 900,
-        readBatchSize: 900,
-        historyBufferSize: 1000,
-        consumerStrategyName: ROUND_ROBIN,
-      };
-
-      await this.client.createPersistentSubscriptionToAll(
-        this.subscriptionName,
-        settings,
-      );
+      await this.esRepository.createPersistentSubscriptionToAll();
 
       console.log('Persistent subscription created successfully');
     } catch (err) {
@@ -137,9 +61,9 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
   }
 
   async readFromPersistentSubscription() {
-    const subscription = this.client.subscribeToPersistentSubscriptionToAll(
-      this.subscriptionName,
-    );
+    const subscription =
+      this.esRepository.subscribeToPersistentSubscriptionToAll();
+
     subscription.on('data', (resolvedEvent) => {
       if (resolvedEvent.event.type.startsWith('$')) {
         return;
@@ -159,7 +83,7 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
   }
 
   private async handleEvent(recievedEvent: any) {
-    let event;
+    let event: ContactCreated | ContactUpdated;
 
     switch (recievedEvent.type) {
       case 'ContactCreated':

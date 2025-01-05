@@ -12,6 +12,7 @@ import {
 import { ContactRepository } from 'src/infrustructure/storage/mongodb/contact.repository';
 import { UpdateContactHandler } from './handler/update-contact.command.handler';
 import { RedisModule } from 'src/infrustructure/storage/redis/redis.module';
+import { EventStoreRepository } from 'src/infrustructure/storage/eventstoredb/esdb.repository';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { RedisModule } from 'src/infrustructure/storage/redis/redis.module';
     ContactService,
     Contact,
     EventStoreService,
+    EventStoreRepository,
   ],
   exports: [ContactService],
 })
