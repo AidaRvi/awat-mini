@@ -1,15 +1,25 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class mockContactModel {
+export class MockedContactRepository {
+  static instanceCount = 0;
   private store: Record<string, any[]> = {};
 
-  insertOne(collection: string, document: any) {
-    if (!this.store[collection]) this.store[collection] = [];
-    this.store[collection].push(document);
+  constructor() {
+    MockedContactRepository.instanceCount += 1;
+
+    this.store['contact'] = [];
   }
 
-  findOne(collection: string, query: any) {
-    return this.store[collection] || null;
+  createOne(document: any) {
+    this.store['contact'].push(document);
+  }
+
+  findOne(id: string) {
+    return this.store['contact'].find((contact) => contact.id == id);
+  }
+
+  static getInstanceCount() {
+    return MockedContactRepository.instanceCount;
   }
 }

@@ -33,7 +33,7 @@ export class EventStoreRepository {
 
   onModuleInit() {
     this.client = EventStoreDBClient.connectionString(
-      'esdb://localhost:2114?tls=false',
+      'esdb://localhost:2113?tls=false',
     );
   }
 
@@ -113,7 +113,7 @@ export class EventStoreRepository {
     }
   }
 
-  subscribeToPersistentSubscriptionToAll() {
+  async subscribeToPersistentSubscriptionToAll() {
     const subscription = this.client.subscribeToPersistentSubscriptionToAll(
       this.subscriptionName,
     );

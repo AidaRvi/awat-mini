@@ -62,7 +62,7 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
 
   async readFromPersistentSubscription() {
     const subscription =
-      this.esRepository.subscribeToPersistentSubscriptionToAll();
+      await this.esRepository.subscribeToPersistentSubscriptionToAll();
 
     subscription.on('data', (resolvedEvent) => {
       if (resolvedEvent.event.type.startsWith('$')) {

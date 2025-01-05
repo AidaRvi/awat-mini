@@ -9,27 +9,24 @@ import {
   Contact as ContactModel,
   ContactSchema,
 } from 'src/infrustructure/storage/mongodb/contact.schema';
-import { ContactRepository } from 'src/infrustructure/storage/mongodb/contact.repository';
 import { UpdateContactHandler } from './handler/update-contact.command.handler';
 import { RedisModule } from 'src/infrustructure/storage/redis/redis.module';
-import { EventStoreRepository } from 'src/infrustructure/storage/eventstoredb/esdb.repository';
+import { EventStoreModule } from 'src/infrustructure/storage/eventstoredb/esdb.module';
 
 @Module({
   imports: [
     RedisModule,
     CqrsModule,
+    EventStoreModule,
     MongooseModule.forFeature([
       { name: ContactModel.name, schema: ContactSchema },
     ]),
   ],
   providers: [
-    ContactRepository,
     CreateContactHandler,
     UpdateContactHandler,
     ContactService,
     Contact,
-    EventStoreService,
-    EventStoreRepository,
   ],
   exports: [ContactService],
 })
