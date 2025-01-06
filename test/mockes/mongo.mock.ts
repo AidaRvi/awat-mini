@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UpdateContactDto } from 'src/domain/Dto/update-contact.dto';
 
 @Injectable()
 export class MockedContactRepository {
@@ -21,5 +22,9 @@ export class MockedContactRepository {
 
   static getInstanceCount() {
     return MockedContactRepository.instanceCount;
+  }
+
+  updateOne({ id, name }: UpdateContactDto) {
+    this.store['contact'].find((contact) => contact.id == id).name = name;
   }
 }

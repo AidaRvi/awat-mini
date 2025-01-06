@@ -36,9 +36,10 @@ export class mockEventStoreRepository {
 
         for (const event of toBeSubscribed) {
           eventStream = this.objectToReadableStream({ event });
+          this.store[`contacts-${event.data.id}`].find(
+            (e) => e.id == event.id,
+          ).status = 'completed';
         }
-        //TODO: remove pending
-
         resolve(eventStream);
       }, 1000);
     });
