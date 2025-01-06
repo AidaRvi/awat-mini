@@ -8,26 +8,26 @@ export class Contact extends AggregateRoot {
   private name: string;
   private phoneNumber: number;
 
-  constructor(id: string, name: string, phoneNumber?: number) {
+  constructor() {
     super();
-    this.id = id;
-    this.name = name;
-    this.phoneNumber = phoneNumber;
-  }
-  // action
-  // applicator
-  createContact() {
-    const contactEvent = new ContactCreated(
-      this.id,
-      this.name,
-      this.phoneNumber,
-    );
-    return this.apply(contactEvent);
   }
 
-  updateContact() {
-    const contactEvent = new ContactUpdated(this.id, this.name);
-    return this.apply(contactEvent);
+  public onContactCreated(event: ContactCreated): void {
+    this.id = event.id;
+    this.name = event.name;
+    this.phoneNumber = event.phoneNumber;
+  }
+
+  public onContactUpdated(event: ContactUpdated): void {
+    if (event.name) this.name = event.name;
+  }
+
+  createContact(id: string, name: string, phoneNumber: number) {
+    this.apply(new ContactCreated(id, name, phoneNumber));
+  }
+
+  getContact() {
+    return { id: this.id, name: this.name, phoneNumber: this.phoneNumber };
   }
 
   async isUpdateValid(events: ResolvedEvent<EventType>[]): Promise<boolean> {
@@ -41,5 +41,17 @@ export class Contact extends AggregateRoot {
     }
 
     return true;
+  }
+
+  public static rehydrate(events: any[]): Contact {
+    const contact = new Contact();
+    for (const event of events) {
+      contact.apply(event);
+    }
+    return contact;
+  }
+
+  public updateContact(name?: string) {
+    this.apply(new ContactUpdated(this.id, name));
   }
 }

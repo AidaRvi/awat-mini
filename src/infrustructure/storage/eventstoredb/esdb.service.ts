@@ -83,8 +83,24 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
   }
 
   private async handleEvent(recievedEvent: any) {
-    let event: ContactCreated | ContactUpdated;
+    // return recievedEvent;
+    const event = this.eventHandler(recievedEvent);
+    await this.eventBus.publish(event);
+  }
 
+  async loadEvents(streamName: string): Promise<any[]> {
+    const events = [];
+    const eventStream = await this.esRepository.readStream(streamName);
+
+    for (const resolvedEvent of eventStream) {
+      const event = this.eventHandler(resolvedEvent);
+      events.push(event);
+    }
+    return events;
+  }
+
+  eventHandler(recievedEvent) {
+    let event: ContactCreated | ContactUpdated;
     switch (recievedEvent.type) {
       case 'ContactCreated':
         event = new ContactCreated(
@@ -101,6 +117,6 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
         break;
     }
 
-    await this.eventBus.publish(event);
+    return event;
   }
 }

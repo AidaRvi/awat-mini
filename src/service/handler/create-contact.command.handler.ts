@@ -16,13 +16,11 @@ export class CreateContactHandler
 
   async execute(command: CreateContactCommand) {
     // TODO: factory
-    const contactRoot = new Contact(
-      command.id,
-      command.name,
-      command.phoneNumber,
-    );
-
-    contactRoot.createContact();
+    // const contactRoot = Contact.createContact(
+    //   command.id,
+    //   command.name,
+    //   command.phoneNumber,
+    // );
 
     const events = await this.ESrepository.getStream(`contacts-${command.id}`);
 
@@ -38,6 +36,9 @@ export class CreateContactHandler
       this.redisService.setData(`create:${command.id}`, 'failed');
       return;
     }
+
+    const contactRoot = new Contact();
+    contactRoot.createContact(command.id, command.name, command.phoneNumber);
 
     const contact = this.publisher.mergeObjectContext(contactRoot);
     contact.commit();

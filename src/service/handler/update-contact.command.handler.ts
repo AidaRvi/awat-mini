@@ -16,7 +16,7 @@ export class UpdateContactHandler
 
   async execute(command: UpdateContactCommand) {
     const streamName = `contacts-${command.id}`;
-    const events = await this.ESrepository.getStream(streamName);
+    const events = await this.ESrepository.loadEvents(streamName);
 
     if (!events.length) {
       console.log('* Error: contact does not exist');
@@ -24,20 +24,22 @@ export class UpdateContactHandler
       return;
     }
 
-    const contactRoot = new Contact(command.id, command.name);
+    const contactRoot = Contact.rehydrate(events);
 
-    const isValid = await contactRoot.isUpdateValid(events);
-    if (!isValid) {
-      console.log('* Error: Can not update a contact more than 5 times!');
-      this.redisService.setData(`update:${command.id}`, 'failed');
-      return;
-    }
+    //
 
-    contactRoot.updateContact();
+    // const isValid = await contactRoot.isUpdateValid(events);
+    // if (!isValid) {
+    //   console.log('* Error: Can not update a contact more than 5 times!');
+    //   this.redisService.setData(`update:${command.id}`, 'failed');
+    //   return;
+    // }
 
-    const contact = this.publisher.mergeObjectContext(contactRoot);
+    const wrappedContact = this.publisher.mergeObjectContext(contactRoot);
+    wrappedContact.updateContact(command.name);
 
-    contact.commit();
+    // await this.ESrepository.publish(contactRoot.getUncommittedEvents());
+    wrappedContact.commit();
 
     this.redisService.setData(`update:${command.id}`, 'published');
     console.log('** Update-contact published');
