@@ -26,19 +26,16 @@ export class UpdateContactHandler
 
     const contactRoot = Contact.rehydrate(events);
 
-    //
-
-    // const isValid = await contactRoot.isUpdateValid(events);
-    // if (!isValid) {
-    //   console.log('* Error: Can not update a contact more than 5 times!');
-    //   this.redisService.setData(`update:${command.id}`, 'failed');
-    //   return;
-    // }
+    const isValid = await contactRoot.isUpdateValid(events);
+    if (!isValid) {
+      console.log('* Error: Can not update a contact more than 5 times!');
+      this.redisService.setData(`update:${command.id}`, 'failed');
+      return;
+    }
 
     const wrappedContact = this.publisher.mergeObjectContext(contactRoot);
     wrappedContact.updateContact(command.name);
 
-    // await this.ESrepository.publish(contactRoot.getUncommittedEvents());
     wrappedContact.commit();
 
     this.redisService.setData(`update:${command.id}`, 'published');

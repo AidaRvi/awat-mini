@@ -35,8 +35,7 @@ export class Contact extends AggregateRoot {
     let count = 0;
 
     for (const event of events) {
-      // @ts-ignore
-      if (event.type == 'ContactUpdated') count++;
+      if (event.constructor.name == 'ContactUpdated') count++;
       if (count >= maxUpdateCount) return false;
     }
 
@@ -46,12 +45,20 @@ export class Contact extends AggregateRoot {
   public static rehydrate(events: any[]): Contact {
     const contact = new Contact();
     for (const event of events) {
-      contact.apply(event);
+      contact.handleEvent(event);
     }
     return contact;
   }
 
   public updateContact(name?: string) {
     this.apply(new ContactUpdated(this.id, name));
+  }
+
+  private handleEvent(event: any) {
+    if (event instanceof ContactCreated) {
+      this.onContactCreated(event);
+    } else if (event instanceof ContactUpdated) {
+      this.onContactUpdated(event);
+    }
   }
 }
