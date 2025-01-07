@@ -16,13 +16,13 @@ export class UpdateContactEventHandler
     const contact = await this.contactRepository.findOne(event.id);
     if (!contact) {
       console.log('Contact not found');
-      this.redisService.setData(`update:${event.id}`, 'failed');
+      this.redisService.setData(event.correlationId, 'failed');
       return;
     }
 
     await this.contactRepository.updateOne(event);
 
-    this.redisService.setData(`update:${event.id}`, 'completed');
+    this.redisService.setData(event.correlationId, 'completed');
 
     console.log('** Contact Updated');
   }

@@ -57,7 +57,7 @@ describe('ContactModule (e2e)', () => {
   it('should create contact', async () => {
     await rmqController.createContact(firstContact);
 
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // TODO:
 
     const esdbData = eventStoreRepository.readStream(
       `contacts-${firstContact.id}`,
@@ -76,7 +76,7 @@ describe('ContactModule (e2e)', () => {
   });
 
   it('should not be able to create the same contact', async () => {
-    await rmqController.createContact(firstContact);
+    await rmqController.createContact(firstContact); // TODO: error
 
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -97,10 +97,10 @@ describe('ContactModule (e2e)', () => {
       id: firstContact.id,
       name: faker.person.firstName(),
     };
-    rmqController.updateContact(updateDTO);
-    subscriptionController.createSubscription();
+    await rmqController.updateContact(updateDTO);
+    await subscriptionController.createSubscription();
 
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // TODO:
 
     const esdbData = eventStoreRepository.readStream(
       `contacts-${updateDTO.id}`,
@@ -117,5 +117,5 @@ describe('ContactModule (e2e)', () => {
     const mongoData = contactRepository.findOne(updateDTO.id);
     expect(mongoData).toBeDefined();
     expect(mongoData.name).toBe(updateDTO.name);
-  }, 10000);
+  });
 });

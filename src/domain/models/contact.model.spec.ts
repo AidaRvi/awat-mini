@@ -5,7 +5,7 @@ import { Contact } from './contact.model';
 describe('Contact Aggregate', () => {
   it('should create a contact', () => {
     const contact = new Contact();
-    contact.createContact('uuid', 'Aida', 9389835712);
+    contact.createContact('uuid', 'Aida', 9389835712); // TODO:
 
     const uncommittedEvents = contact.getUncommittedEvents();
     expect(uncommittedEvents.length).toBe(1);
@@ -46,7 +46,7 @@ describe('Contact Aggregate', () => {
       contact.commit();
     }
 
-    expect(() => contact.updateContact('Aida 6')).toThrow(
+    expect(() => contact.updateContact('Aida 5')).toThrow(
       `Contact update limit exceeded`,
     );
   });

@@ -18,12 +18,17 @@ export class ContactService {
       contactDto.id,
       contactDto.name,
       contactDto.phoneNumber,
+      contactDto.correlationId,
     );
     return this.commandBus.execute(command);
   }
 
   updateContact(contactDto: UpdateContactDto): Promise<any> {
-    const command = new UpdateContactCommand(contactDto.id, contactDto.name);
+    const command = new UpdateContactCommand(
+      contactDto.id,
+      contactDto.name,
+      contactDto.correlationId,
+    );
     return this.commandBus.execute(command);
   }
 }

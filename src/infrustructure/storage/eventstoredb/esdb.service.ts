@@ -107,12 +107,14 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
           recievedEvent.data.id,
           recievedEvent.data.name,
           recievedEvent.data.phoneNumber,
+          recievedEvent.data.correlationId,
         );
         break;
       case 'ContactUpdated':
         event = new ContactUpdated(
           recievedEvent.data.id,
           recievedEvent.data.name,
+          recievedEvent.data.correlationId,
         );
         break;
     }

@@ -15,6 +15,6 @@ export class CreateContactEventHandler
   async handle(event: ContactCreated): Promise<void> {
     await this.contactRepository.createOne(event);
     console.log('** Contact created');
-    this.redisService.setData(`create:${event.id}`, 'completed');
+    this.redisService.setData(event.correlationId, 'completed');
   }
 }

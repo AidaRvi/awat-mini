@@ -19,7 +19,7 @@ export class CreateContactHandler
 
     if (events.length) {
       console.log('* Error: Contact exists!');
-      this.redisService.setData(`create:${command.id}`, 'failed');
+      this.redisService.setData(command.correlationId, 'failed');
       return;
     }
 
@@ -31,17 +31,22 @@ export class CreateContactHandler
 
     if (doesExists) {
       console.log('* Error: Duplicate PhoneNumber entered');
-      this.redisService.setData(`create:${command.id}`, 'failed');
+      this.redisService.setData(command.correlationId, 'failed');
       return;
     }
 
     const contactRoot = new Contact();
-    contactRoot.createContact(command.id, command.name, command.phoneNumber);
+    contactRoot.createContact(
+      command.id,
+      command.name,
+      command.phoneNumber,
+      command.correlationId,
+    );
 
     const contact = this.publisher.mergeObjectContext(contactRoot);
     contact.commit();
 
-    await this.redisService.setData(`create:${command.id}`, 'published');
+    await this.redisService.setData(command.correlationId, 'published');
     console.log('** Published');
   }
 }

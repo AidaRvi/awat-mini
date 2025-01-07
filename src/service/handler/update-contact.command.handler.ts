@@ -20,7 +20,7 @@ export class UpdateContactHandler
 
     if (!events.length) {
       console.log('* Error: contact does not exist');
-      this.redisService.setData(`update:${command.id}`, 'failed');
+      this.redisService.setData(command.correlationId, 'failed');
       return;
     }
 
@@ -29,14 +29,14 @@ export class UpdateContactHandler
     const wrappedContact = this.publisher.mergeObjectContext(contactRoot);
 
     try {
-      wrappedContact.updateContact(command.name);
+      wrappedContact.updateContact(command.correlationId, command.name);
 
       wrappedContact.commit();
 
-      this.redisService.setData(`update:${command.id}`, 'published');
+      this.redisService.setData(command.correlationId, 'published');
       console.log('** Update-contact published');
     } catch (error) {
-      this.redisService.setData(`update:${command.id}`, 'failed');
+      this.redisService.setData(command.correlationId, 'failed');
     }
   }
 }

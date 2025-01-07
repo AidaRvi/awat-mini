@@ -9,20 +9,18 @@ export class RabbitmqController {
   constructor(private readonly contactService: ContactService) {}
 
   @MessagePattern('create-contact')
-  async createContact(@Payload() contactDto: CreateContactDto) {
-    console.log('** Received a request for "creation":', contactDto);
+  async createContact(@Payload() createContactDto: CreateContactDto) {
+    console.log('** Received a request for "creation":', createContactDto);
 
-    this.contactService.createContact(contactDto);
-
-    return { status: 'success', receivedData: contactDto };
+    this.contactService.createContact(createContactDto);
+    return { correlationId: createContactDto.correlationId };
   }
 
   @MessagePattern('update-contact')
-  async updateContact(@Payload() contactDto: UpdateContactDto) {
-    console.log('** Received a request for "updating":', contactDto);
+  async updateContact(@Payload() updateContactDto: UpdateContactDto) {
+    console.log('** Received a request for "updating":', updateContactDto);
 
-    await this.contactService.updateContact(contactDto);
-
-    return { status: 'success', receivedData: contactDto };
+    await this.contactService.updateContact(updateContactDto);
+    return { correlationId: updateContactDto.correlationId };
   }
 }
