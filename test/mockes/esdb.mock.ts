@@ -4,16 +4,10 @@ import { Readable } from 'stream';
 @Injectable()
 export class mockEventStoreRepository {
   private store: Record<string, any[]> = {};
-  static instanceCount = 0;
-
-  constructor() {
-    mockEventStoreRepository.instanceCount += 1;
-  }
 
   appendToStream(streamName: string, data: any) {
     if (!this.store[streamName]) this.store[streamName] = [];
     this.store[streamName].push({ ...data, status: 'pending' });
-    console.log();
   }
 
   readStream(streamName: string) {
@@ -26,6 +20,7 @@ export class mockEventStoreRepository {
   }
 
   subscribeToPersistentSubscriptionToAll(): Promise<Readable> {
+    // TODO: projection
     return new Promise((resolve) => {
       setTimeout(() => {
         let eventStream: Readable;
@@ -53,9 +48,5 @@ export class mockEventStoreRepository {
         this.push(null);
       },
     });
-  }
-
-  static getInstanceCount() {
-    return mockEventStoreRepository.instanceCount;
   }
 }

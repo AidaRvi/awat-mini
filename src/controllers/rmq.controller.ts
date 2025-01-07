@@ -18,10 +18,10 @@ export class RabbitmqController {
   }
 
   @MessagePattern('update-contact')
-  updateContact(@Payload() contactDto: UpdateContactDto) {
+  async updateContact(@Payload() contactDto: UpdateContactDto) {
     console.log('** Received a request for "updating":', contactDto);
 
-    this.contactService.updateContact(contactDto);
+    await this.contactService.updateContact(contactDto);
 
     return { status: 'success', receivedData: contactDto };
   }
