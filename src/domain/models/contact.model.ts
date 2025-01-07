@@ -57,4 +57,12 @@ export class Contact extends AggregateRoot {
       this.onContactUpdated(event);
     }
   }
+
+  static checkIfPhoneNumberExists(phoneNumber: number, events: any[]): boolean {
+    return events.some(
+      (event) =>
+        event.type === 'ContactCreated' &&
+        (event.data as any).phoneNumber === phoneNumber,
+    );
+  }
 }

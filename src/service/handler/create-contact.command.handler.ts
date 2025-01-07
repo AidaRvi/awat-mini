@@ -15,13 +15,6 @@ export class CreateContactHandler
   ) {}
 
   async execute(command: CreateContactCommand) {
-    // TODO: factory
-    // const contactRoot = Contact.createContact(
-    //   command.id,
-    //   command.name,
-    //   command.phoneNumber,
-    // );
-
     const events = await this.ESrepository.getStream(`contacts-${command.id}`);
 
     if (events.length) {
@@ -30,7 +23,12 @@ export class CreateContactHandler
       return;
     }
 
-    const doesExists = await this.checkIfPhoneNumberExists(command.phoneNumber);
+    const allEvents = await this.ESrepository.getAllEvents();
+    const doesExists = Contact.checkIfPhoneNumberExists(
+      command.phoneNumber,
+      allEvents,
+    );
+
     if (doesExists) {
       console.log('* Error: Duplicate PhoneNumber entered');
       this.redisService.setData(`create:${command.id}`, 'failed');
@@ -45,19 +43,5 @@ export class CreateContactHandler
 
     await this.redisService.setData(`create:${command.id}`, 'published');
     console.log('** Published');
-  }
-
-  async checkIfPhoneNumberExists(phoneNumber: number) {
-    const allEvents = await this.ESrepository.getAllEvents();
-    const duplicatedEvent = allEvents.find((event) => {
-      if (
-        event.type == 'ContactCreated' &&
-        (event.data as any).phoneNumber === phoneNumber
-      )
-        return event.data;
-    });
-
-    if (duplicatedEvent) return true;
-    return false;
   }
 }
