@@ -1,37 +1,53 @@
+import { ContactCreated } from '../events/create-contact.event';
+import { ContactUpdated } from '../events/update-contact.event';
 import { Contact } from './contact.model';
 
-describe('ContactAggregate', () => {
-  it('should create a contact and emit a ContactCreated event', () => {
-    const id = '12345';
-    const name = 'John Doe';
-    const phoneNumber = 9389837510;
+describe('Contact Aggregate', () => {
+  it('should create a contact', () => {
+    const contact = new Contact();
+    contact.createContact('uuid', 'Aida', 9389835712);
 
-    const contact = Contact.createContact(id, name, phoneNumber);
+    const uncommittedEvents = contact.getUncommittedEvents();
+    expect(uncommittedEvents.length).toBe(1);
 
-    const emittedEvents = contact.getUncommittedEvents();
-    expect(contact.getContact()).toEqual({ id, name, phoneNumber });
-    expect(emittedEvents.length).toBe(1);
-    expect(emittedEvents[0].constructor.name).toEqual('ContactCreated');
+    const event = uncommittedEvents[0] as ContactCreated;
+    expect(event.id).toBe('uuid');
+    expect(event.name).toBe('Aida');
+    expect(event.phoneNumber).toBe(9389835712);
+
+    contact.commit();
+    expect(contact.getUncommittedEvents().length).toBe(0);
   });
 
-  it('should update a contact and emit a ContactUpdated event', () => {
-    const id = '12345';
-    const name = 'John Doe';
-    const phoneNumber = 9389837510;
-    const updatedName = 'Jane Doe2';
+  it('should update a contact', () => {
+    const contact = new Contact();
+    contact.createContact('uuid', 'Aida', 9389835712);
+    contact.commit();
 
-    const contact = Contact.createContact(id, name, phoneNumber);
+    contact.updateContact('Azin');
 
-    contact.updateContact(updatedName);
+    const uncommittedEvents = contact.getUncommittedEvents();
+    expect(uncommittedEvents.length).toBe(1);
 
-    const emittedEvents = contact.getUncommittedEvents();
-    expect(contact.getContact()).toEqual({
-      id,
-      name: updatedName,
-      phoneNumber,
-    });
-    expect(emittedEvents.length).toBe(2);
-    expect(emittedEvents[1].constructor.name).toEqual('ContactUpdated');
-    expect(emittedEvents[1]).toEqual({ id, name: updatedName });
+    const event = uncommittedEvents[0] as ContactUpdated;
+    expect(event.name).toBe('Azin');
+
+    contact.commit();
+    expect(contact.getUncommittedEvents().length).toBe(0);
+  });
+
+  it('should throw an error if update count exceeds the limit', () => {
+    const contact = new Contact();
+    contact.createContact('uuid', 'Aida', 9389835712);
+    contact.commit();
+
+    for (let i = 0; i < 5; i++) {
+      contact.updateContact(`Aida ${i}`);
+      contact.commit();
+    }
+
+    expect(() => contact.updateContact('Aida 6')).toThrow(
+      `Contact update limit exceeded`,
+    );
   });
 });
