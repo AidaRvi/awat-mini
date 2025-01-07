@@ -7,6 +7,9 @@ export class Contact extends AggregateRoot {
   private id: string;
   private name: string;
   private phoneNumber: number;
+  private updateCount: number = 0;
+
+  private static readonly MAX_UPDATES = 5;
 
   constructor() {
     super();
@@ -20,6 +23,7 @@ export class Contact extends AggregateRoot {
 
   public onContactUpdated(event: ContactUpdated): void {
     if (event.name) this.name = event.name;
+    this.updateCount++;
   }
 
   createContact(id: string, name: string, phoneNumber: number) {
@@ -28,18 +32,6 @@ export class Contact extends AggregateRoot {
 
   getContact() {
     return { id: this.id, name: this.name, phoneNumber: this.phoneNumber };
-  }
-
-  async isUpdateValid(events: ResolvedEvent<EventType>[]): Promise<boolean> {
-    const maxUpdateCount = 5;
-    let count = 0;
-
-    for (const event of events) {
-      if (event.constructor.name == 'ContactUpdated') count++;
-      if (count >= maxUpdateCount) return false;
-    }
-
-    return true;
   }
 
   public static rehydrate(events: any[]): Contact {
@@ -51,6 +43,10 @@ export class Contact extends AggregateRoot {
   }
 
   public updateContact(name?: string) {
+    if (this.updateCount >= Contact.MAX_UPDATES) {
+      console.log('** Contact update limit exceeded');
+      throw new Error(`Contact update limit exceeded`);
+    }
     this.apply(new ContactUpdated(this.id, name));
   }
 
