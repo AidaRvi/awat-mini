@@ -13,22 +13,25 @@ export class ContactService {
     this.commandBus.register([CreateContactHandler, UpdateContactHandler]);
   }
 
-  createContact(contactDto: CreateContactDto): Promise<any> {
+  async createContact(contactDto: CreateContactDto): Promise<any> {
     const command = new CreateContactCommand(
       contactDto.id,
       contactDto.name,
       contactDto.phoneNumber,
       contactDto.correlationId,
     );
-    return this.commandBus.execute(command);
+
+    const result = await this.commandBus.execute(command);
+    return result;
   }
 
-  updateContact(contactDto: UpdateContactDto): Promise<any> {
+  async updateContact(contactDto: UpdateContactDto): Promise<any> {
     const command = new UpdateContactCommand(
       contactDto.id,
       contactDto.name,
       contactDto.correlationId,
     );
-    return this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return result;
   }
 }

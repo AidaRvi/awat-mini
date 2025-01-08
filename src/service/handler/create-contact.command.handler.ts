@@ -18,9 +18,9 @@ export class CreateContactHandler
     const events = await this.ESrepository.getStream(`contacts-${command.id}`);
 
     if (events.length) {
-      console.log('* Error: Contact exists!');
       this.redisService.setData(command.correlationId, 'failed');
-      return;
+      console.log('* Error: Contact exists!');
+      throw new Error('Contact exists');
     }
 
     const allEvents = await this.ESrepository.getAllEvents();
@@ -30,9 +30,9 @@ export class CreateContactHandler
     );
 
     if (doesExists) {
-      console.log('* Error: Duplicate PhoneNumber entered');
       this.redisService.setData(command.correlationId, 'failed');
-      return;
+      console.log('* Error: Duplicate PhoneNumber entered');
+      throw new Error('Duplicated PhoneNumber entered');
     }
 
     const contactRoot = new Contact();

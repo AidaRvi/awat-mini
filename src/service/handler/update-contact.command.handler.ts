@@ -19,9 +19,9 @@ export class UpdateContactHandler
     const events = await this.ESrepository.loadEvents(streamName);
 
     if (!events.length) {
-      console.log('* Error: contact does not exist');
+      console.log('* Error: Contact does not exist');
       this.redisService.setData(command.correlationId, 'failed');
-      return;
+      throw new Error('Contact does not exist');
     }
 
     const contactRoot = Contact.rehydrate(events);
@@ -37,6 +37,7 @@ export class UpdateContactHandler
       console.log('** Update-contact published');
     } catch (error) {
       this.redisService.setData(command.correlationId, 'failed');
+      throw new Error(error.message);
     }
   }
 }
