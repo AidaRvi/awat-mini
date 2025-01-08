@@ -23,6 +23,7 @@ describe('ContactModule (e2e)', () => {
   let contactRepository: MockedContactRepository;
   const firstContact: CreateContactDto = {
     id: uuidv4(),
+    correlationId: uuidv4(),
     name: faker.person.firstName(),
     phoneNumber: Number(
       faker.phone.number({ style: 'international' }).slice(1),
@@ -65,8 +66,9 @@ describe('ContactModule (e2e)', () => {
     expect(esdbData).toBeDefined();
     expect(esdbData.length).toBe(1);
     expect(esdbData[0].type).toBe('ContactCreated');
+    expect(esdbData[0].data.correlationId).toBe(firstContact.correlationId);
 
-    const redisData = redisService.getData(`create:${firstContact.id}`);
+    const redisData = redisService.getData(firstContact.correlationId);
     expect(redisData).toBeDefined();
     expect(redisData).toBe('completed');
 
@@ -76,26 +78,33 @@ describe('ContactModule (e2e)', () => {
   });
 
   it('should not be able to create the same contact', async () => {
-    await rmqController.createContact(firstContact); // TODO: error
+    const dublicatedContact: CreateContactDto = {
+      id: firstContact.id,
+      correlationId: uuidv4(),
+      name: firstContact.name,
+      phoneNumber: firstContact.phoneNumber,
+    };
+    await rmqController.createContact(dublicatedContact); // TODO: error
 
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const esdbData = eventStoreRepository.readStream(
-      `contacts-${firstContact.id}`,
+      `contacts-${dublicatedContact.id}`,
     );
     expect(esdbData).toBeDefined();
     expect(esdbData.length).toBe(1);
     expect(esdbData[0].type).toBe('ContactCreated');
 
-    const redisData = redisService.getData(`create:${firstContact.id}`);
+    const redisData = redisService.getData(dublicatedContact.correlationId);
     expect(redisData).toBeDefined();
     expect(redisData).toBe('failed');
-  });
+  }, 10000);
 
   it('should update the contact', async () => {
     const updateDTO: UpdateContactDto = {
       id: firstContact.id,
       name: faker.person.firstName(),
+      correlationId: uuidv4(),
     };
     await rmqController.updateContact(updateDTO);
     await subscriptionController.createSubscription();
@@ -109,8 +118,9 @@ describe('ContactModule (e2e)', () => {
     expect(esdbData.length).toBe(2);
     expect(esdbData[0].type).toBe('ContactCreated');
     expect(esdbData[1].type).toBe('ContactUpdated');
+    expect(esdbData[1].data.correlationId).toBe(updateDTO.correlationId);
 
-    const redisData = redisService.getData(`update:${updateDTO.id}`);
+    const redisData = redisService.getData(updateDTO.correlationId);
     expect(redisData).toBeDefined();
     expect(redisData).toBe('completed');
 
