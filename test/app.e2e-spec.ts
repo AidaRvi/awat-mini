@@ -106,7 +106,10 @@ describe('ContactModule (e2e)', () => {
       name: firstContact.name,
       phoneNumber: firstContact.phoneNumber,
     };
-    await rmqController.createContact(dublicatedContact); // TODO: error
+
+    await expect(
+      rmqController.createContact(dublicatedContact),
+    ).rejects.toThrow('Contact exists');
 
     await pollRedis(
       dublicatedContact.correlationId,

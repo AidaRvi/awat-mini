@@ -72,7 +72,10 @@ describe('UpdateContactHandler', () => {
       'Azin',
       'correlationId',
     );
-    await commandHandler.execute(command);
+
+    await expect(commandHandler.execute(command)).rejects.toThrow(
+      'Contact does not exist',
+    );
 
     expect(eventStoreMock.loadEvents).toHaveBeenCalledWith(
       'contacts-contactId',
@@ -103,7 +106,10 @@ describe('UpdateContactHandler', () => {
       'Aida 6',
       'correlationId',
     );
-    await commandHandler.execute(command);
+
+    await expect(commandHandler.execute(command)).rejects.toThrow(
+      'Contact update limit exceeded',
+    );
 
     expect(redisServiceMock.setData).toHaveBeenCalledWith(
       'correlationId',

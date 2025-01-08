@@ -88,7 +88,7 @@ describe('CreateContactHandler', () => {
     eventStoreService.getAllEvents.mockResolvedValue([]);
     redisService.setData.mockResolvedValue(undefined);
 
-    await handler.execute(command);
+    await expect(handler.execute(command)).rejects.toThrow('Contact exists');
 
     expect(redisService.setData).toHaveBeenCalledWith(
       'correlationId',
@@ -120,7 +120,9 @@ describe('CreateContactHandler', () => {
     eventStoreService.getAllEvents.mockResolvedValue([data]);
     redisService.setData.mockResolvedValue(undefined);
 
-    await handler.execute(command);
+    await expect(handler.execute(command)).rejects.toThrow(
+      'Duplicated PhoneNumber entered',
+    );
 
     expect(redisService.setData).toHaveBeenCalledWith(
       `correlationId`,
