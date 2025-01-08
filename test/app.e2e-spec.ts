@@ -55,10 +55,36 @@ describe('ContactModule (e2e)', () => {
     await app.close();
   });
 
+  const pollRedis = async (
+    key: string,
+    condition: (value: string) => boolean,
+  ) => {
+    const startTime = Date.now();
+
+    return new Promise((resolve, reject) => {
+      const checkCondition = async () => {
+        const elapsedTime = Date.now() - startTime;
+
+        if (elapsedTime > 4000)
+          return reject(new Error('Polling timeout reached'));
+
+        const value = await redisService.getData(key);
+        if (condition(value)) return resolve(value);
+
+        setTimeout(checkCondition, 500);
+      };
+
+      checkCondition();
+    });
+  };
+
   it('should create contact', async () => {
     await rmqController.createContact(firstContact);
 
-    await new Promise((resolve) => setTimeout(resolve, 3000)); // TODO:
+    await pollRedis(
+      firstContact.correlationId,
+      (value) => value === 'completed',
+    );
 
     const esdbData = eventStoreRepository.readStream(
       `contacts-${firstContact.id}`,
@@ -67,10 +93,6 @@ describe('ContactModule (e2e)', () => {
     expect(esdbData.length).toBe(1);
     expect(esdbData[0].type).toBe('ContactCreated');
     expect(esdbData[0].data.correlationId).toBe(firstContact.correlationId);
-
-    const redisData = redisService.getData(firstContact.correlationId);
-    expect(redisData).toBeDefined();
-    expect(redisData).toBe('completed');
 
     const mongoData = contactRepository.findOne(firstContact.id);
     expect(mongoData).toBeDefined();
@@ -86,7 +108,10 @@ describe('ContactModule (e2e)', () => {
     };
     await rmqController.createContact(dublicatedContact); // TODO: error
 
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await pollRedis(
+      dublicatedContact.correlationId,
+      (value) => value === 'failed',
+    );
 
     const esdbData = eventStoreRepository.readStream(
       `contacts-${dublicatedContact.id}`,
@@ -94,11 +119,7 @@ describe('ContactModule (e2e)', () => {
     expect(esdbData).toBeDefined();
     expect(esdbData.length).toBe(1);
     expect(esdbData[0].type).toBe('ContactCreated');
-
-    const redisData = redisService.getData(dublicatedContact.correlationId);
-    expect(redisData).toBeDefined();
-    expect(redisData).toBe('failed');
-  }, 10000);
+  });
 
   it('should update the contact', async () => {
     const updateDTO: UpdateContactDto = {
@@ -109,8 +130,7 @@ describe('ContactModule (e2e)', () => {
     await rmqController.updateContact(updateDTO);
     await subscriptionController.createSubscription();
 
-    await new Promise((resolve) => setTimeout(resolve, 3000)); // TODO:
-
+    await pollRedis(updateDTO.correlationId, (value) => value === 'completed');
     const esdbData = eventStoreRepository.readStream(
       `contacts-${updateDTO.id}`,
     );
@@ -119,10 +139,6 @@ describe('ContactModule (e2e)', () => {
     expect(esdbData[0].type).toBe('ContactCreated');
     expect(esdbData[1].type).toBe('ContactUpdated');
     expect(esdbData[1].data.correlationId).toBe(updateDTO.correlationId);
-
-    const redisData = redisService.getData(updateDTO.correlationId);
-    expect(redisData).toBeDefined();
-    expect(redisData).toBe('completed');
 
     const mongoData = contactRepository.findOne(updateDTO.id);
     expect(mongoData).toBeDefined();
