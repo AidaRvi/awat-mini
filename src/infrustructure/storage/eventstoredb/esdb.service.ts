@@ -52,7 +52,7 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
 
   async createPersistentSubscription() {
     try {
-      await this.esRepository.createPersistentSubscriptionToAll();
+      await this.esRepository.createPersistentSubscriptionToStream();
 
       console.log('Persistent subscription created successfully');
     } catch (err) {
@@ -62,10 +62,11 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
 
   async readFromPersistentSubscription() {
     const subscription =
-      await this.esRepository.subscribeToPersistentSubscriptionToAll();
+      await this.esRepository.subscribeToPersistentSubscriptionToStream();
 
     subscription.on('data', (resolvedEvent) => {
-      if (resolvedEvent.event.type.startsWith('$')) {
+      if (!resolvedEvent.event || resolvedEvent.event.type.startsWith('$')) {
+        console.log('DEAD');
         return;
       }
       console.log('** Received event');

@@ -3,30 +3,23 @@ import {
   AllStreamRecordedEvent,
   EventStoreDBClient,
   EventType,
-  PersistentSubscriptionToAllSettings,
   ROUND_ROBIN,
   START,
   ResolvedEvent,
+  PersistentSubscriptionToStreamSettings,
+  persistentSubscriptionToStreamSettingsFromDefaults,
 } from '@eventstore/db-client';
 
 @Injectable()
 export class EventStoreRepository {
   private client: EventStoreDBClient;
-  private subscriptionName = 'CONTACTS2';
-  private setting: PersistentSubscriptionToAllSettings = {
-    startFrom: 'start',
-    resolveLinkTos: false,
-    extraStatistics: false,
-    messageTimeout: 0,
-    maxRetryCount: 0,
-    checkPointAfter: 0,
-    checkPointLowerBound: 0,
-    checkPointUpperBound: 0,
-    maxSubscriberCount: 2,
-    liveBufferSize: 900,
-    readBatchSize: 900,
-    historyBufferSize: 1000,
-    consumerStrategyName: ROUND_ROBIN,
+  private subscriptionName = 'con52tact-gr3155347';
+  private streamName = '$et-ContactCreated';
+
+  private setting: any = {
+    checkPointLowerBound: 1,
+    resolveLinkTos: true,
+    startFrom: BigInt(0),
   };
 
   constructor() {}
@@ -100,11 +93,12 @@ export class EventStoreRepository {
     }
   }
 
-  async createPersistentSubscriptionToAll() {
+  async createPersistentSubscriptionToStream() {
     try {
-      await this.client.createPersistentSubscriptionToAll(
+      await this.client.createPersistentSubscriptionToStream(
+        this.streamName,
         this.subscriptionName,
-        this.setting,
+        persistentSubscriptionToStreamSettingsFromDefaults(this.setting),
       );
 
       console.log('Persistent subscription created successfully');
@@ -113,8 +107,9 @@ export class EventStoreRepository {
     }
   }
 
-  async subscribeToPersistentSubscriptionToAll() {
-    const subscription = this.client.subscribeToPersistentSubscriptionToAll(
+  async subscribeToPersistentSubscriptionToStream() {
+    const subscription = this.client.subscribeToPersistentSubscriptionToStream(
+      this.streamName,
       this.subscriptionName,
     );
 
