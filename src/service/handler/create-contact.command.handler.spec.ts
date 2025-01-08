@@ -52,8 +52,12 @@ describe('CreateContactHandler', () => {
   });
 
   it('should create a contact successfully', async () => {
-    const command = new CreateContactCommand('uuid', 'Aida', 1234567890);
-
+    const command = new CreateContactCommand(
+      'contactId',
+      'Aida',
+      1234567890,
+      'correlationId',
+    );
     eventStoreService.getStream.mockResolvedValue([]);
     eventStoreService.getAllEvents.mockResolvedValue([]);
     redisService.setData.mockResolvedValue(undefined);
@@ -66,13 +70,18 @@ describe('CreateContactHandler', () => {
     expect(eventStoreService.getAllEvents).toHaveBeenCalled();
     expect(eventPublisher.mergeObjectContext).toHaveBeenCalled();
     expect(redisService.setData).toHaveBeenCalledWith(
-      `create:${command.id}`,
+      command.correlationId,
       'published',
     );
   });
 
   it('should fail if the contact already exists', async () => {
-    const command = new CreateContactCommand('uuid', 'Aida', 1234567890);
+    const command = new CreateContactCommand(
+      'contactId',
+      'Aida',
+      1234567890,
+      'correlationId',
+    );
 
     const data: ResolvedEvent<EventType> = {};
     eventStoreService.getStream.mockResolvedValue([data]);
@@ -82,14 +91,19 @@ describe('CreateContactHandler', () => {
     await handler.execute(command);
 
     expect(redisService.setData).toHaveBeenCalledWith(
-      `create:${command.id}`,
+      'correlationId',
       'failed',
     );
     expect(eventPublisher.mergeObjectContext).not.toHaveBeenCalled();
   });
 
-  it.only('should fail if the phone number is already in use', async () => {
-    const command = new CreateContactCommand('uuid', 'Aida', 1234567890);
+  it('should fail if the phone number is already in use', async () => {
+    const command = new CreateContactCommand(
+      'contactId',
+      'Aida',
+      1234567890,
+      'correlationId',
+    );
 
     eventStoreService.getStream.mockResolvedValue([]);
 
@@ -109,7 +123,7 @@ describe('CreateContactHandler', () => {
     await handler.execute(command);
 
     expect(redisService.setData).toHaveBeenCalledWith(
-      `create:${command.id}`,
+      `correlationId`,
       'failed',
     );
     expect(eventPublisher.mergeObjectContext).not.toHaveBeenCalled();

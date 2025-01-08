@@ -8,7 +8,7 @@ import { UpdateContactHandler } from './update-contact.command.handler';
 import { RedisService } from '../../infrustructure/storage/redis/redis.service';
 import { EventStoreService } from '../../infrustructure/storage/eventstoredb/esdb.service';
 
-describe.only('UpdateContactHandler', () => {
+describe('UpdateContactHandler', () => {
   let commandHandler: UpdateContactHandler;
   let eventStoreMock: jest.Mocked<EventStoreService>;
   let redisServiceMock: jest.Mocked<RedisService>;
@@ -41,19 +41,25 @@ describe.only('UpdateContactHandler', () => {
 
   it('should successfully update a contact', async () => {
     const mockContact = new Contact();
-    mockContact.createContact('uuid', 'Aida', 9389837511);
+    mockContact.createContact('contactId', 'Aida', 9389835712, 'correlationId');
     mockContact.commit();
 
     eventStoreMock.loadEvents.mockResolvedValueOnce([
-      new ContactCreated('uuid', 'Aida', 9389837511),
+      new ContactCreated('contactId', 'Aida', 9389837511, 'correlationId'),
     ]);
 
-    const command = new UpdateContactCommand('uuid', 'Azin');
+    const command = new UpdateContactCommand(
+      'contactId',
+      'Azin',
+      'correlationId',
+    );
     await commandHandler.execute(command);
 
-    expect(eventStoreMock.loadEvents).toHaveBeenCalledWith('contacts-uuid');
+    expect(eventStoreMock.loadEvents).toHaveBeenCalledWith(
+      'contacts-contactId',
+    );
     expect(redisServiceMock.setData).toHaveBeenCalledWith(
-      'update:uuid',
+      'correlationId',
       'published',
     );
   });
@@ -61,34 +67,46 @@ describe.only('UpdateContactHandler', () => {
   it('should not update a contact which is not created before', async () => {
     eventStoreMock.loadEvents.mockResolvedValueOnce([]);
 
-    const command = new UpdateContactCommand('uuid', 'Azin');
+    const command = new UpdateContactCommand(
+      'contactId',
+      'Azin',
+      'correlationId',
+    );
     await commandHandler.execute(command);
 
-    expect(eventStoreMock.loadEvents).toHaveBeenCalledWith('contacts-uuid');
+    expect(eventStoreMock.loadEvents).toHaveBeenCalledWith(
+      'contacts-contactId',
+    );
     expect(redisServiceMock.setData).toHaveBeenCalledWith(
-      'update:uuid',
+      'correlationId',
       'failed',
     );
   });
 
   it('should set a failed state in Redis when update limit is exceeded', async () => {
     const mockContact = new Contact();
-    mockContact.createContact('uuid', 'Aida', 9389837511);
+    mockContact.createContact('contactId', 'Aida', 9389835712, 'correlationId');
 
     for (let i = 0; i < 5; i++) {
       mockContact.updateContact(`Aida ${i}`);
     }
 
     eventStoreMock.loadEvents.mockResolvedValueOnce([
-      new ContactCreated('uuid', 'Aida', 9389837511),
-      ...Array(5).fill(new ContactUpdated('uuid', 'Aida')),
+      new ContactCreated('contactId', 'Aida', 9389837511, 'correlationId'),
+      ...Array(5).fill(
+        new ContactUpdated('contactId', 'Aida', 'correlationId'),
+      ),
     ]);
 
-    const command = new UpdateContactCommand('uuid', 'Aida 6');
+    const command = new UpdateContactCommand(
+      'contactId',
+      'Aida 6',
+      'correlationId',
+    );
     await commandHandler.execute(command);
 
     expect(redisServiceMock.setData).toHaveBeenCalledWith(
-      'update:uuid',
+      'correlationId',
       'failed',
     );
   });

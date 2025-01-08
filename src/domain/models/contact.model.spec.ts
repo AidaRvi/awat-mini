@@ -5,15 +5,16 @@ import { Contact } from './contact.model';
 describe('Contact Aggregate', () => {
   it('should create a contact', () => {
     const contact = new Contact();
-    contact.createContact('uuid', 'Aida', 9389835712); // TODO:
+    contact.createContact('contactId', 'Aida', 9389835712, 'correlationId'); // TODO:
 
     const uncommittedEvents = contact.getUncommittedEvents();
     expect(uncommittedEvents.length).toBe(1);
 
     const event = uncommittedEvents[0] as ContactCreated;
-    expect(event.id).toBe('uuid');
+    expect(event.id).toBe('contactId');
     expect(event.name).toBe('Aida');
     expect(event.phoneNumber).toBe(9389835712);
+    expect(event.correlationId).toBe('correlationId');
 
     contact.commit();
     expect(contact.getUncommittedEvents().length).toBe(0);
@@ -21,10 +22,10 @@ describe('Contact Aggregate', () => {
 
   it('should update a contact', () => {
     const contact = new Contact();
-    contact.createContact('uuid', 'Aida', 9389835712);
+    contact.createContact('contactId', 'Aida', 9389835712, 'correlationId');
     contact.commit();
 
-    contact.updateContact('Azin');
+    contact.updateContact('correlationId', 'Azin');
 
     const uncommittedEvents = contact.getUncommittedEvents();
     expect(uncommittedEvents.length).toBe(1);
@@ -38,7 +39,7 @@ describe('Contact Aggregate', () => {
 
   it('should throw an error if update count exceeds the limit', () => {
     const contact = new Contact();
-    contact.createContact('uuid', 'Aida', 9389835712);
+    contact.createContact('contactId', 'Aida', 9389835712, 'correlationId');
     contact.commit();
 
     for (let i = 0; i < 5; i++) {
