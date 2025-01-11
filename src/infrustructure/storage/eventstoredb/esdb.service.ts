@@ -67,10 +67,13 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
     subscription.on('data', (resolvedEvent) => {
       if (!resolvedEvent.event || resolvedEvent.event.type.startsWith('$')) {
         console.log('DEAD');
+        subscription.ack(resolvedEvent);
+
         return;
       }
       console.log('** Received event');
       this.handleEvent(resolvedEvent.event);
+      subscription.ack(resolvedEvent);
     });
     subscription.on('error', (err) => {
       console.error('Error in persistent subscription:', err);

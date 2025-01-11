@@ -13,14 +13,8 @@ import {
 @Injectable()
 export class EventStoreRepository {
   private client: EventStoreDBClient;
-  private subscriptionName = 'con52tact-gr3155347';
+  private subscriptionName = 'contacts';
   private streamName = '$et-ContactCreated';
-
-  private setting: any = {
-    checkPointLowerBound: 1,
-    resolveLinkTos: true,
-    startFrom: BigInt(0),
-  };
 
   constructor() {}
 
@@ -98,12 +92,16 @@ export class EventStoreRepository {
       await this.client.createPersistentSubscriptionToStream(
         this.streamName,
         this.subscriptionName,
-        persistentSubscriptionToStreamSettingsFromDefaults(this.setting),
+        persistentSubscriptionToStreamSettingsFromDefaults({
+          resolveLinkTos: true,
+          startFrom: BigInt(0),
+          checkPointLowerBound: 1,
+        }),
       );
 
       console.log('Persistent subscription created successfully');
     } catch (err) {
-      console.error('Error creating persistent subscription:', err);
+      console.error('Error creating persistent subscription:', err.message);
     }
   }
 

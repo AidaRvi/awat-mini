@@ -13,7 +13,12 @@ export class CreateContactEventHandler
   ) {}
 
   async handle(event: ContactCreated): Promise<void> {
-    await this.contactRepository.createOne(event);
+    try {
+      await this.contactRepository.createOne(event);
+    } catch (err) {
+      console.log(err.message);
+      return;
+    }
     console.log('** Contact created');
     await this.redisService.setData(event.correlationId, 'completed');
   }
