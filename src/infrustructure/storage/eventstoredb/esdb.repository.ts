@@ -3,10 +3,8 @@ import {
   AllStreamRecordedEvent,
   EventStoreDBClient,
   EventType,
-  ROUND_ROBIN,
   START,
   ResolvedEvent,
-  PersistentSubscriptionToStreamSettings,
   persistentSubscriptionToStreamSettingsFromDefaults,
 } from '@eventstore/db-client';
 
@@ -15,6 +13,8 @@ export class EventStoreRepository {
   private client: EventStoreDBClient;
   private subscriptionName = 'contacts';
   private streamName = '$et-ContactCreated';
+  private subscriptionNameUpdate = 'contactsUpdate';
+  private streamNameUpdate = '$et-ContactUpdated';
 
   constructor() {}
 
@@ -90,6 +90,15 @@ export class EventStoreRepository {
   async createPersistentSubscriptionToStream() {
     try {
       await this.client.createPersistentSubscriptionToStream(
+        this.streamNameUpdate,
+        this.subscriptionNameUpdate,
+        persistentSubscriptionToStreamSettingsFromDefaults({
+          resolveLinkTos: true,
+          startFrom: BigInt(0),
+          checkPointLowerBound: 1,
+        }),
+      );
+      await this.client.createPersistentSubscriptionToStream(
         this.streamName,
         this.subscriptionName,
         persistentSubscriptionToStreamSettingsFromDefaults({
@@ -109,6 +118,15 @@ export class EventStoreRepository {
     const subscription = this.client.subscribeToPersistentSubscriptionToStream(
       this.streamName,
       this.subscriptionName,
+    );
+
+    return subscription;
+  }
+
+  async subscribeToPersistentSubscriptionToStreamUpdate() {
+    const subscription = this.client.subscribeToPersistentSubscriptionToStream(
+      this.streamNameUpdate,
+      this.subscriptionNameUpdate,
     );
 
     return subscription;

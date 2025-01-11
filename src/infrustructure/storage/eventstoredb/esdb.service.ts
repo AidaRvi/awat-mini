@@ -84,6 +84,30 @@ export class EventStoreService implements IEventPublisher, OnModuleInit {
     subscription.on('close', () => {
       console.error('close in persistent subscription');
     });
+
+    const subscriptionUpdate =
+      await this.esRepository.subscribeToPersistentSubscriptionToStreamUpdate();
+
+    subscriptionUpdate.on('data', (resolvedEvent) => {
+      if (!resolvedEvent.event || resolvedEvent.event.type.startsWith('$')) {
+        console.log('DEAD');
+        subscriptionUpdate.ack(resolvedEvent);
+
+        return;
+      }
+      console.log('** Received event');
+      this.handleEvent(resolvedEvent.event);
+      subscriptionUpdate.ack(resolvedEvent);
+    });
+    subscriptionUpdate.on('error', (err) => {
+      console.error('Error in persistent subscription:', err);
+    });
+    subscriptionUpdate.on('end', () => {
+      console.error('end in persistent subscription');
+    });
+    subscriptionUpdate.on('close', () => {
+      console.error('close in persistent subscription');
+    });
   }
 
   private async handleEvent(recievedEvent: any) {
